@@ -1,33 +1,7 @@
-
-<!-- # الكود من غير اختيار الماده -->
-
-<!-- <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <h2>Face Recognition System</h2>
-        <button onclick="recognizeFromCamera()">Start Face Recognition</button>
-        <p id="result"></p>
-    </div>
-    
-    <script src="script.js"></script>
-</body>
-</html> -->
-
-
-
-
-
-
+ 
 <!-- # الكود بعد  اختيار الماده -->
 
-
+<!-- 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -52,7 +26,42 @@
     
     <script src="js/script.js"></script>
 </body>
+</html> -->
+
+
+
+
+
+
+ <!-- final -->
+
+
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Face Recognition System</h2>
+
+        <!-- اختيار المادة -->
+        <label for="course">Select the material:</label>
+        <select id="course">
+            <option value="">-- Select the material --</option>
+        </select>
+
+        <!-- ✅ إدخال جديد لإدخال رقم الأسبوع -->
+        <label for="week">Enter the week number:</label>
+        <input type="number" id="week" min="1" placeholder="Enter week ID" required>
+
+        <button onclick="recognizeFromCamera()">Start Face Recognition</button>
+        <p id="result"></p>
+    </div>
+    
+    <script src="js/script.js"></script>
+</body>
 </html>
-
-
- 
