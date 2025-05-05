@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from simple_facerec import SimpleFacerec
 
+
 app = FastAPI()
 
 # تمكين CORS لجميع المسارات
@@ -34,7 +35,7 @@ else:
     sfr.save_encodings(ENCODINGS_FILE)
     print("Saved face encodings to file.")
 
-RTSP_URL = 0  # استخدم عنوان كاميرا RTSP أو 0 لكاميرا الجهاز
+RTSP_URL = 1 # استخدم عنوان كاميرا RTSP أو 0 لكاميرا الجهاز
 
 # API لمسح بيانات الحضور
 @app.post("/api/clear_attendance")
@@ -102,7 +103,7 @@ def video_feed():
 # توليد إطارات الفيديو
 def generate_frames():
     cap = cv2.VideoCapture(RTSP_URL)
-    frame_resizing = 0.25
+    frame_resizing = 1.5
 
     while True:
         success, img = cap.read()
@@ -159,6 +160,14 @@ def mark_attendance(name, filename='attendance.json'):
 
         print(f"Attendance marked for {name} at {new_attendance['time']}")
 
+@app.route('/api/clear_attendance', methods=['POST'])
+def clear_attendance_api():
+    try:
+        with open('attendance.json', 'w') as f:
+            json.dump([], f, indent=4)
+        return jsonify({'message': 'Attendance data cleared successfully!'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 # بدء التطبيق
 if __name__ == "__main__":
     import uvicorn

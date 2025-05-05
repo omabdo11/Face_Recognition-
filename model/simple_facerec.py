@@ -73,7 +73,7 @@ class SimpleFacerec:
             face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
             if face_distances.size > 0:
                 best_match_index = np.argmin(face_distances)
-                if matches[best_match_index]:
+                if matches[best_match_index] < 0.45:   # تحكم في حساسية التعرف
                     name = self.known_face_names[best_match_index]
             
             face_names.append(name)
