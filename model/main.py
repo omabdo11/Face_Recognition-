@@ -35,7 +35,7 @@ else:
     sfr.save_encodings(ENCODINGS_FILE)
     print("Saved face encodings to file.")
 
-RTSP_URL = 1 # استخدم عنوان كاميرا RTSP أو 0 لكاميرا الجهاز
+RTSP_URL = 0 # استخدم عنوان كاميرا RTSP أو 0 لكاميرا الجهاز
 
 # API لمسح بيانات الحضور
 @app.post("/api/clear_attendance")
@@ -103,7 +103,7 @@ def video_feed():
 # توليد إطارات الفيديو
 def generate_frames():
     cap = cv2.VideoCapture(RTSP_URL)
-    frame_resizing = 1.5
+    frame_resizing = 2.0
 
     while True:
         success, img = cap.read()
