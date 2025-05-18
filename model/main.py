@@ -7,11 +7,10 @@ from fastapi import FastAPI, Response, Request
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from simple_facerec import SimpleFacerec
-
+from collections import defaultdict
 
 app = FastAPI()
 
-# تمكين CORS لجميع المسارات
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,20 +23,16 @@ sfr = SimpleFacerec()
 
 ENCODINGS_FILE = "encodings.json"
 
-# إذا كان الملف موجودًا، نحمّل التشفيرات
 if os.path.exists(ENCODINGS_FILE):
     sfr.load_encodings(ENCODINGS_FILE)
 else:
-    # تحميل التشفيرات وتخزينها في ملف لأول مرة
     print("Loading face encodings for the first time...")
     sfr.load_encoding_images("E:/faces/omar/my-Github/Face_Recognition-/person")
-    # حفظ التشفيرات في ملف JSON
     sfr.save_encodings(ENCODINGS_FILE)
     print("Saved face encodings to file.")
 
-RTSP_URL = 0 # استخدم عنوان كاميرا RTSP أو 0 لكاميرا الجهاز
+RTSP_URL = 0
 
-# API لمسح بيانات الحضور
 @app.post("/api/clear_attendance")
 async def clear_attendance_api():
     try:
@@ -47,7 +42,6 @@ async def clear_attendance_api():
     except Exception as e:
         return {"error": str(e)}, 500
 
-# API لتسجيل الحضور
 @app.post("/api/mark_attendance")
 async def mark_attendance_api(request: Request):
     form = await request.form()
@@ -73,7 +67,6 @@ async def mark_attendance_api(request: Request):
             if matches[matchIndex]:
                 name = sfr.known_face_names[matchIndex].upper()
                 recognized_names.append(name)
-                # حفظ الحضور في ملف JSON
                 mark_attendance(name)
 
         return {"recognized": recognized_names}
@@ -81,7 +74,6 @@ async def mark_attendance_api(request: Request):
     except Exception as e:
         return {"error": str(e)}, 500
 
-# API لقراءة بيانات الحضور
 @app.get("/api/get_attendance")
 async def get_attendance_api():
     try:
@@ -93,22 +85,25 @@ async def get_attendance_api():
     except Exception as e:
         return {"error": str(e)}, 500
 
-# API لجلب الفيديو
 from fastapi.responses import StreamingResponse
 
 @app.get("/video_feed")
 def video_feed():
     return StreamingResponse(generate_frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
-# توليد إطارات الفيديو
 def generate_frames():
     cap = cv2.VideoCapture(RTSP_URL)
     frame_resizing = 2.0
+
+    frame_count = 0
+    recognized_in_frames = defaultdict(int)
 
     while True:
         success, img = cap.read()
         if not success:
             break
+
+        frame_count += 1
 
         imgS = cv2.resize(img, (0, 0), fx=frame_resizing, fy=frame_resizing)
         imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
@@ -123,23 +118,33 @@ def generate_frames():
 
             if matches[matchIndex]:
                 name = sfr.known_face_names[matchIndex].upper()
-                print(f"Recognized: {name}")
+
+                recognized_in_frames[name] += 1
+
+                if recognized_in_frames[name] >= 6:
+                    print(f"{name} recognized {recognized_in_frames[name]} times, marking attendance.")
+                    mark_attendance(name)  
+                    recognized_in_frames[name] = 0
+
                 faceLoc = np.array(faceLoc) / frame_resizing
                 y1, x2, y2, x1 = faceLoc.astype(int)
 
                 cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 cv2.rectangle(img, (x1, y2 - 35), (x2, y2), (0, 255, 0), cv2.FILLED)
                 cv2.putText(img, name, (x1 + 6, y2 - 6), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2)
-                mark_attendance(name)
+
+        cv2.putText(img, f"Frame: {frame_count}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
 
         ret, buffer = cv2.imencode('.jpg', img)
         img = buffer.tobytes()
         yield (b'--frame\r\n'
                b'Content-Type: image/jpeg\r\n\r\n' + img + b'\r\n')
 
+        if frame_count >= 10:
+            break
+
     cap.release()
 
-# تسجيل الحضور في ملف JSON
 def mark_attendance(name, filename='attendance.json'):
     new_attendance = {
         "name": name,
@@ -168,10 +173,7 @@ def clear_attendance_api():
         return jsonify({'message': 'Attendance data cleared successfully!'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-# بدء التطبيق
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-
